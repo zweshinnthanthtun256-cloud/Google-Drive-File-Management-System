@@ -10,7 +10,7 @@ class FileManagerController extends Controller
 {
     \Log::info('STEP 1: Controller reached');
 
-    $response = Inertia::render('Files/Index');
+    $response = Inertia::render('Drive/Index');
 
     \Log::info('STEP 2: Inertia render created');
 

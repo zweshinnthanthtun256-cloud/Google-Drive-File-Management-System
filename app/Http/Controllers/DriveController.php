@@ -10,50 +10,62 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class DriveController extends Controller
 {
     public function index(Request $request)
-    {
-        $service = new GoogleDriveService(
-            $request->user()
-        );
+{
+    $service = new GoogleDriveService(
+        $request->user()
+    );
 
-        $files = $service->listFiles(
-            $request->input('from'),
-            $request->input('to'),
-            $request->input('search'),
-            $request->input('folder_id')
-        );
+    $pageToken = $request->input('page_token');
 
-        $folders = $service->listFolders();
+    $fileList = $service->listFiles(
+        $request->input('from'),
+        $request->input('to'),
+        $request->input('search'),
+        $request->input('folder_id'),
+        $pageToken,
+        15 // Page တစ်ခုမှာ ပြသချင်သည့် အရေအတွက်
+    );
 
-        return Inertia::render('Drive/Index', [
-            'files' => collect($files)->map(function ($file) {
-                return [
-                    'id' => $file->getId(),
-                    'name' => $file->getName(),
-                    'mimeType' => $file->getMimeType(),
-                    'size' => $file->getSize(),
-                    'createdTime' => $file->getCreatedTime(),
-                    'modifiedTime' => $file->getModifiedTime(),
-                    'parents' => $file->getParents(),
-                    'canDownload' => $file->getCapabilities()?->getCanDownload(),
-                ];
-            })->values(),
+    $files = $fileList->getFiles();
+    $nextPageToken = $fileList->getNextPageToken();
+    $folders = $service->listFolders();
 
-            'folders' => collect($folders)->map(function ($folder) {
-                return [
-                    'id' => $folder->getId(),
-                    'name' => $folder->getName(),
-                ];
-            })->values(),
+    return Inertia::render('Drive/Index', [
+        'files' => collect($files)->map(function ($file) {
+            return [
+                'id' => $file->getId(),
+                'name' => $file->getName(),
+                'mimeType' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'createdTime' => $file->getCreatedTime(),
+                'modifiedTime' => $file->getModifiedTime(),
+                'parents' => $file->getParents(),
+                'canDownload' => $file->getCapabilities()?->getCanDownload(),
+            ];
+        })->values(),
 
-            'filters' => [
-                'from' => $request->input('from'),
-                'to' => $request->input('to'),
-                'search' => $request->input('search'),
-                'folder_id' => $request->input('folder_id'),
-            ],
-        ]);
-    }
+        'folders' => collect($folders)->map(function ($folder) {
+            return [
+                'id' => $folder->getId(),
+                'name' => $folder->getName(),
+            ];
+        })->values(),
 
+        'filters' => [
+            'from' => $request->input('from'),
+            'to' => $request->input('to'),
+            'search' => $request->input('search'),
+            'folder_id' => $request->input('folder_id'),
+            'page_token' => $pageToken,
+        ],
+
+        // Pagination Meta Information ကို Front-end ဆီ ပို့ပေးခြင်း
+        'pagination' => [
+            'nextPageToken' => $nextPageToken,
+            'currentPageToken' => $pageToken,
+        ],
+    ]);
+}
     public function download(
         Request $request,
         string $fileId

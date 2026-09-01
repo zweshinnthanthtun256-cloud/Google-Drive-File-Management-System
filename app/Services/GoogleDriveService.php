@@ -78,42 +78,48 @@ class GoogleDriveService
     }
 
     public function listFiles(
-        ?string $from = null,
-        ?string $to = null,
-        ?string $search = null,
-        ?string $folderId = null
-    ) {
-        $conditions = [
-            'trashed = false',
-        ];
+    ?string $from = null,
+    ?string $to = null,
+    ?string $search = null,
+    ?string $folderId = null,
+    ?string $pageToken = null, // Page token ထည့်ပါ
+    int $pageSize = 10 // Multi-page စမ်းရလွယ်အောင် pageSize ကို အနည်းငယ် လျှော့နိုင်သည်
+) {
+    $conditions = [
+        'trashed = false',
+    ];
 
-        if ($from) {
-            $conditions[] = "modifiedTime >= '{$from}T00:00:00'";
-        }
-
-        if ($to) {
-            $conditions[] = "modifiedTime <= '{$to}T23:59:59'";
-        }
-
-        if ($search) {
-            $escaped = str_replace("'", "\\'", $search);
-
-            $conditions[] = "name contains '{$escaped}'";
-        }
-
-        if ($folderId) {
-            $conditions[] = "'{$folderId}' in parents";
-        }
-
-        $response = $this->drive->files->listFiles([
-            'q' => implode(' and ', $conditions),
-            'pageSize' => 100,
-            'orderBy' => 'modifiedTime desc',
-            'fields' => 'files(id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink,capabilities)',
-        ]);
-
-        return $response->getFiles();
+    if ($from) {
+        $conditions[] = "modifiedTime >= '{$from}T00:00:00'";
     }
+
+    if ($to) {
+        $conditions[] = "modifiedTime <= '{$to}T23:59:59'";
+    }
+
+    if ($search) {
+        $escaped = str_replace("'", "\\'", $search);
+        $conditions[] = "name contains '{$escaped}'";
+    }
+
+    if ($folderId) {
+        $conditions[] = "'{$folderId}' in parents";
+    }
+
+    $optParams = [
+        'q' => implode(' and ', $conditions),
+        'pageSize' => $pageSize,
+        'orderBy' => 'modifiedTime desc',
+        'fields' => 'nextPageToken, files(id,name,mimeType,size,createdTime,modifiedTime,parents,webViewLink,capabilities)',
+    ];
+
+    if ($pageToken) {
+        $optParams['pageToken'] = $pageToken;
+    }
+
+    // Response object တစ်ခုလုံးကို ပြန်ပေးရမည် (nextPageToken ပါယူနိုင်ရန်)
+    return $this->drive->files->listFiles($optParams);
+}
 
     public function getFile(string $fileId)
     {
@@ -166,7 +172,7 @@ class GoogleDriveService
     {
         return $this->drive->files->listFiles([
             'q' => "mimeType = 'application/vnd.google-apps.folder' and trashed = false",
-            'pageSize' => 100,
+            'pageSize' => 10,
             'orderBy' => 'name',
             'fields' => 'files(id,name,parents)',
         ])->getFiles();
