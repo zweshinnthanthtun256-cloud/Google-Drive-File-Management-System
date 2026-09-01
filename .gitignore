@@ -7,8 +7,16 @@
 /storage/pail
 /vendor
 .env
+.env
 .env.backup
 .env.production
+
+/vendor
+/node_modules
+
+/storage/*.key
+/storage/logs/*
+
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
