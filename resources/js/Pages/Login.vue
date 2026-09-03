@@ -7,7 +7,7 @@ import { Head } from '@inertiajs/vue3'
 
     <div
         class="relative min-h-screen overflow-hidden bg-slate-950 bg-cover bg-center bg-no-repeat"
-        style="""
+        style="">
     >
         <!-- Background Overlay -->
         <div class="absolute inset-0 bg-slate-950/65"></div>
@@ -167,7 +167,7 @@ import { Head } from '@inertiajs/vue3'
                     </div>
 
                     <!-- Heading -->
-                    <div class="mt-7 text-center">
+                    <div class="mt-4 text-center">
                         <h2
                             class="text-3xl font-bold tracking-tight text-gray-900"
                         >
